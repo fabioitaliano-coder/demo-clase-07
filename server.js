@@ -1,3 +1,12 @@
+// server.js
+// Este archivo monta un servidor Express simple que sirve:
+// - archivos estáticos (frontend)
+// - rutas de autenticación (con Supabase)
+// - rutas protegidas de ejemplo y un CRUD en memoria para demostración
+// Comentarios: Este es un proyecto de ejemplo. En un proyecto real las
+// credenciales y la lógica de persistencia deberían vivir en servicios
+// separados y las claves nunca deben estar en el repositorio.
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -49,6 +58,48 @@ app.get('/api/data', verifyToken, (req, res) => {
     res.json(userData);
 });
 
+// In-memory items store for CRUD demo
+app.locals.items = [
+    { id: 1, nombre: 'Ejemplo 1', descripcion: 'Descripción 1' },
+    { id: 2, nombre: 'Ejemplo 2', descripcion: 'Descripción 2' }
+];
+
+// CRUD: GET all
+app.get('/api/items', verifyToken, (req, res) => {
+    res.json(app.locals.items);
+});
+
+// CRUD: Create
+app.post('/api/items', verifyToken, (req, res) => {
+    const { nombre, descripcion } = req.body;
+    if (!nombre) return res.status(400).json({ message: 'nombre es requerido' });
+    const items = app.locals.items;
+    const id = items.length ? Math.max(...items.map(i => i.id)) + 1 : 1;
+    const nuevo = { id, nombre, descripcion: descripcion || '' };
+    items.push(nuevo);
+    res.status(201).json(nuevo);
+});
+
+// CRUD: Update
+app.put('/api/items/:id', verifyToken, (req, res) => {
+    const id = Number(req.params.id);
+    const { nombre, descripcion } = req.body;
+    const items = app.locals.items;
+    const idx = items.findIndex(i => i.id === id);
+    if (idx === -1) return res.status(404).json({ message: 'Item no encontrado' });
+    items[idx] = { ...items[idx], nombre: nombre ?? items[idx].nombre, descripcion: descripcion ?? items[idx].descripcion };
+    res.json(items[idx]);
+});
+
+// CRUD: Delete
+app.delete('/api/items/:id', verifyToken, (req, res) => {
+    const id = Number(req.params.id);
+    const items = app.locals.items;
+    const idx = items.findIndex(i => i.id === id);
+    if (idx === -1) return res.status(404).json({ message: 'Item no encontrado' });
+    const removed = items.splice(idx, 1)[0];
+    res.json(removed);
+    });
 // Puerto en el que escuchará el servidor
 const PORT = process.env.PORT || 3000;
 

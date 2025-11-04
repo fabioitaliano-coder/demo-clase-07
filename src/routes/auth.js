@@ -1,3 +1,10 @@
+// src/routes/auth.js
+// Rutas de autenticación usadas por el servidor. Este archivo muestra
+// cómo delegar la autenticación a Supabase desde el backend.
+// Exporta: { router, verifyToken } donde `router` contiene endpoints
+// POST /login y POST /register y `verifyToken` es un middleware para
+// proteger rutas.
+
 const express = require('express');
 const router = express.Router();
 const supabase = require('../config/supabase');
